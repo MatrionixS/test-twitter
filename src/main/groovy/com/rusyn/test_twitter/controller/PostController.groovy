@@ -1,51 +1,61 @@
 package com.rusyn.test_twitter.controller
 
-import com.rusyn.test_twitter.model.Post
+import com.rusyn.test_twitter.dto.CommentDto
+import com.rusyn.test_twitter.dto.PostDto
+import com.rusyn.test_twitter.dto.PostRequest
 import com.rusyn.test_twitter.service.PostService
-import lombok.RequiredArgsConstructor
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/posts")
-@RequiredArgsConstructor
 class PostController {
-    @Autowired
+
     private final PostService postService
 
+    PostController(PostService postService) {
+        this.postService = postService
+    }
+
     @PostMapping
-    ResponseEntity<Post> createPost(@RequestBody Map<String, String> payload) {
-        def post = postService.createPost(payload.userId, payload.content)
+    ResponseEntity<PostDto> createPost(@RequestBody PostRequest postDto) {
+        def post = postService.createPost(postDto)
         ResponseEntity.ok(post)
     }
 
-    @GetMapping("/feed/{userId}")
-    ResponseEntity<List<Post>> getFeed(@PathVariable String userId) {
-        def posts = postService.getFeed(userId)
-        ResponseEntity.ok(posts)
+    @PatchMapping("/{postId}/update")
+    ResponseEntity<PostDto> updatePost(@PathVariable("postId") String postId, @RequestBody PostRequest postDto) {
+        def updatedPost = postService.updatePost(postId, postDto)
+        ResponseEntity.ok().body(updatedPost)
     }
 
-    @PostMapping("/{postId}/like")
-    ResponseEntity<Void> likePost(@PathVariable String postId, @RequestBody Map<String, String> payload) {
-        postService.likePost(postId, payload.userId)
+    @DeleteMapping("/{postId}")
+    ResponseEntity<PostDto> deletePost(@PathVariable("postId") String postId) {
+        def updatedPost = postService.deletePost(postId)
+        ResponseEntity.ok().body(updatedPost)
+    }
+
+    @PatchMapping("/{postId}/comment")
+    ResponseEntity<PostDto> addComment(@PathVariable("postId") String postId, @RequestBody CommentDto commentDto) {
+        def postDto = postService.addComment(postId, commentDto)
+        ResponseEntity.ok().body(postDto)
+    }
+
+    @PatchMapping("/{postId}/like")
+    ResponseEntity<Void> likePost(@PathVariable("postId") String postId) {
+        postService.likePost(postId)
         ResponseEntity.ok().build()
     }
 
-    @PostMapping("/{postId}/unlike")
-    ResponseEntity<Void> unlikePost(@PathVariable String postId, @RequestBody Map<String, String> payload) {
-        postService.unlikePost(postId, payload.userId)
+    @PatchMapping("/{postId}/unlike")
+    ResponseEntity<Void> unlikePost(@PathVariable("postId") String postId) {
+        postService.unlikePost(postId)
         ResponseEntity.ok().build()
     }
 
-    @PostMapping("/{postId}/comment")
-    ResponseEntity<Void> addComment(@PathVariable String postId, @RequestBody Map<String, String> payload) {
-        postService.addComment(postId, payload.comment)
-        ResponseEntity.ok().build()
+    @GetMapping("/{postId}/comments")
+    ResponseEntity<List<CommentDto>> getComments(@PathVariable("postId") String postId) {
+        def comments = postService.getComments(postId)
+        ResponseEntity.ok().body(comments)
     }
 }

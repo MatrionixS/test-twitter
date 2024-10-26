@@ -11,4 +11,9 @@ class User {
     String username
     String password
     Set<String> following = new HashSet<>()
+    Set<Post> posts = new HashSet<>()
+
+    void follow(String userToFollowId) {
+        following.add(userToFollowId)
+    }
 }

@@ -5,4 +5,5 @@ import org.springframework.data.mongodb.repository.MongoRepository
 
 interface PostRepository extends MongoRepository<Post, String> {
     List<Post> findAllByUserIdIn(Set<String> userIds)
+    void deleteAllByUserId(String userId)
 }

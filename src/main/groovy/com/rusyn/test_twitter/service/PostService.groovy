@@ -1,44 +1,85 @@
 package com.rusyn.test_twitter.service
 
+import com.rusyn.test_twitter.dto.CommentDto
+import com.rusyn.test_twitter.dto.PostDto
+import com.rusyn.test_twitter.dto.PostRequest
+import com.rusyn.test_twitter.mapper.PostMapper
+import com.rusyn.test_twitter.model.Comment
 import com.rusyn.test_twitter.model.Post
+import com.rusyn.test_twitter.model.User
 import com.rusyn.test_twitter.repository.PostRepository
-import lombok.RequiredArgsConstructor
-import org.springframework.beans.factory.annotation.Autowired
+import jakarta.servlet.http.HttpSession
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
-@RequiredArgsConstructor
 class PostService {
-    @Autowired
+
     private final PostRepository postRepository
-    @Autowired
-    UserService userService
+    private final UserService userService
+    private final HttpSession session
 
-    Post createPost(String userId, String content) {
-        def post = new Post(userId: userId, content: content)
-        postRepository.save(post)
+    PostService(PostRepository postRepository, UserService userService, HttpSession session) {
+        this.postRepository = postRepository
+        this.userService = userService
+        this.session = session
     }
 
-    List<Post> getFeed(String userId) {
-        def user = userService.findById(userId)
-        postRepository.findAllByUserIdIn(user.following)
+    PostDto createPost(PostRequest postRequest) {
+        def sessionUser = (User) session.getAttribute("user")
+        def post = new Post(userId: sessionUser.getId(), content: postRequest.getContent())
+        def savedPost = postRepository.save(post)
+        PostMapper.toPostDto(savedPost)
     }
 
-    void likePost(String postId, String userId) {
-        def post = postRepository.findById(postId).get()
-        post.likes.add(userId)
-        postRepository.save(post)
+
+
+    void likePost(String postId) {
+        postRepository.findById(postId).map {
+            it.like()
+            postRepository.save(it)
+        }orElseThrow()
     }
 
-    void unlikePost(String postId, String userId) {
-        def post = postRepository.findById(postId).get()
-        post.likes.remove(userId)
-        postRepository.save(post)
+    void unlikePost(String postId) {
+        postRepository.findById(postId).map {
+            it.unlike()
+            postRepository.save(it)
+        }.orElseThrow()
     }
 
-    void addComment(String postId, String comment) {
-        def post = postRepository.findById(postId).get()
-        post.comments.add(comment)
-        postRepository.save(post)
+    PostDto addComment(String postId, CommentDto commentDto) {
+        postRepository.findById(postId).map {
+            def comment = toComment(commentDto)
+            it.addComment(comment)
+            postRepository.save(it)
+            PostMapper.toPostDto(it)
+        }.orElseThrow()
+    }
+
+    private Comment toComment(CommentDto commentDto) {
+        return new Comment(commentDto.getContent())
+    }
+
+    PostDto updatePost(String postId, PostRequest postRequest) {
+        postRepository.findById(postId).map {
+            it.setContent(postRequest.getContent())
+            postRepository.save(it)
+            PostMapper.toPostDto(it)
+        }.orElseThrow()
+    }
+
+    PostDto deletePost(String postId) {
+        postRepository.findById(postId).map {
+            postRepository.deleteById(it.getId())
+            PostMapper.toPostDto(it)
+        }.orElseThrow()
+    }
+
+     List<CommentDto> getComments(String postId) {
+         postRepository.findById(postId).map {
+             it.getComments().stream().map {PostMapper.toCommentDto(it)}.toList()
+         }.orElseThrow()
     }
 }
