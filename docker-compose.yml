@@ -15,6 +15,12 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=test
       - MONGO_INITDB_DATABASE=test
     restart: unless-stopped
+  test-twitter:
+    build: .
+    depends_on:
+      - mongodb
+    ports:
+      - 8080:8080
 
 volumes:
   mongo:

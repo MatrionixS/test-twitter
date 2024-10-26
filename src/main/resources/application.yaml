@@ -3,6 +3,6 @@ spring:
     name: test-twitter
   data:
     mongodb:
-      uri: mongodb://test:test@localhost:27017/test
+      uri: mongodb://test:test@mongodb/test
       username: test
       password: test
