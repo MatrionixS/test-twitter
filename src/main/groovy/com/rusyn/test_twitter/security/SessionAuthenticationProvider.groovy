@@ -13,8 +13,7 @@ class SessionAuthenticationProvider implements AuthenticationProvider {
     @Override
     Authentication authenticate(Authentication authentication) throws AuthenticationException {
         authentication = (SessionAuthentication) authentication
-//        if (authentication.getUser() != null) {
-        if (true) {
+        if (authentication.getUser() != null) {
             authentication.setAuthenticated(true)
             return authentication
         }
